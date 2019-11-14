@@ -1,0 +1,30 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: simpleingressrules.simpleingresscontroller.k8s.io
+spec:
+  group: simpleingresscontroller.k8s.io
+  version: v1alpha1
+  names:
+    kind: SimpleIngressRule
+    plural: simpleingressrules
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            rules:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  service:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      port:
+                        type: integer

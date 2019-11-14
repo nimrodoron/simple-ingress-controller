@@ -1,0 +1,10 @@
+apiVersion: simpleingresscontroller.k8s.io/v1alpha1
+kind: SimpleIngressRule
+metadata:
+  name: hello-minikube-ingress
+spec:
+  rules:
+    - path: /test/minikube
+      service:
+        name: hello-minikube
+        port: 80

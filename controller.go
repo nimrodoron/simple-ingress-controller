@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog"
 	"time"
@@ -60,7 +61,7 @@ func (c *Controller) Run(stopCh <-chan struct{}, ruleCh chan<- *reverseproxy.Pro
 	if ok := cache.WaitForCacheSync(stopCh, c.simpleIngressRuleSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
-	simpleIngressRules, err := c.simpleIngressRuleLister.List(nil)
+	simpleIngressRules, err := c.simpleIngressRuleLister.List(labels.Everything())
 	if err != nil {
 		return fmt.Errorf("failed to retreive list from cache")
 	}

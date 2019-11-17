@@ -22,18 +22,18 @@ type SimpleIngressRuleSpec struct {
 }
 
 type RuleSpec struct {
-	Path string `json:"path"`
+	Path    string      `json:"path"`
 	Service ServiceSpec `json:"service"`
 }
 
 type ServiceSpec struct {
 	Name string `json:"name"`
-	Port int `json:"port"`
+	Port int    `json:"port"`
 }
 
 // FooStatus is the status for a Foo resource
 type SimpleIngressRuleStatus struct {
-	state string `json:"state"`
+	State string `json:"state"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

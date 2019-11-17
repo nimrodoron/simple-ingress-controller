@@ -26,5 +26,3 @@ spec:
                     properties:
                       name:
                         type: string
-                      port:
-                        type: integer

@@ -7,4 +7,3 @@ spec:
     - path: /test/minikube
       service:
         name: hello-minikube
-        port: 80

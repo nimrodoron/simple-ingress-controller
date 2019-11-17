@@ -17,7 +17,7 @@ const (
 type ProxyRuleOperation struct {
 	Path        string
 	ServiceName string
-	operation   ProxyConditionOperation
+	Operation   ProxyConditionOperation
 }
 
 func NewReverseProxy(port int) *ReverseProxy {

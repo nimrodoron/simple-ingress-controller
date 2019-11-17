@@ -11,6 +11,8 @@ import (
 
 	clientset "github.com/nimrodoron/simple-ingress-controller/pkg/generated/clientset/versioned"
 	"github.com/nimrodoron/simple-ingress-controller/pkg/signals"
+
+	reverseproxy "github.com/nimrodoron/simple-ingress-controller/pkg/server"
 )
 
 var (
@@ -24,6 +26,7 @@ func main() {
 
 	// set up signals so we handle the first shutdown signal gracefully
 	stopCh := signals.SetupSignalHandler()
+	rulesCh := make(chan *reverseproxy.ProxyRuleOperation)
 
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
@@ -42,7 +45,7 @@ func main() {
 
 	controller := NewController(kubeClient, controllerClient)
 
-	if err = controller.Run(stopCh); err != nil {
+	if err = controller.Run(stopCh, rulesCh); err != nil {
 		klog.Fatalf("Error running controller: %s", err.Error())
 	}
 }

@@ -2,14 +2,15 @@ package main
 
 import (
 	"flag"
+	"time"
 
+	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
-	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
-	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	clientset "github.com/nimrodoron/simple-ingress-controller/pkg/generated/clientset/versioned"
+	informers "github.com/nimrodoron/simple-ingress-controller/pkg/generated/informers/externalversions"
 	"github.com/nimrodoron/simple-ingress-controller/pkg/signals"
 
 	reverseproxy "github.com/nimrodoron/simple-ingress-controller/pkg/server"
@@ -43,9 +44,19 @@ func main() {
 		klog.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	controller := NewController(kubeClient, controllerClient)
+	simpleIngressRuleInformerFactory := informers.NewSharedInformerFactory(controllerClient, time.Second*30)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 
-	if err = controller.Run(stopCh, rulesCh); err != nil {
+	controller := NewController(kubeClient, controllerClient, simpleIngressRuleInformerFactory.Samplecontroller().V1alpha1().SimpleIngressRules(),
+		kubeInformerFactory.Core().V1().Services(), rulesCh)
+
+	simpleIngressRuleInformerFactory.Start(stopCh)
+	kubeInformerFactory.Start(stopCh)
+
+	proxy := reverseproxy.NewReverseProxy("8080", controller)
+	go proxy.Run(rulesCh)
+
+	if err = controller.Run(stopCh); err != nil {
 		klog.Fatalf("Error running controller: %s", err.Error())
 	}
 }

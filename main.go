@@ -53,7 +53,7 @@ func main() {
 	simpleIngressRuleInformerFactory.Start(stopCh)
 	kubeInformerFactory.Start(stopCh)
 
-	proxy := reverseproxy.NewReverseProxy("8080", controller)
+	proxy := reverseproxy.NewReverseProxy(8080, controller)
 	go proxy.Run(rulesCh)
 
 	if err = controller.Run(stopCh); err != nil {

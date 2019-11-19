@@ -28,7 +28,6 @@ type RuleSpec struct {
 
 type ServiceSpec struct {
 	Name string `json:"name"`
-	Port int    `json:"port"`
 }
 
 // FooStatus is the status for a Foo resource

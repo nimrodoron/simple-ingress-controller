@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -8,7 +9,7 @@ import (
 )
 
 type ReverseProxy struct {
-	port            string
+	port            int32
 	pathUrlMap      map[string]string
 	namePathsMap    map[string][]string
 	ruleMux         sync.Mutex
@@ -30,14 +31,14 @@ type ProxyRuleOperation struct {
 
 type Service struct {
 	Address string
-	Port    string
+	Port    int32
 }
 
 type ServiceResolver interface {
 	GetService(name string) (*Service, error)
 }
 
-func NewReverseProxy(port string, serviceResolver ServiceResolver) *ReverseProxy {
+func NewReverseProxy(port int32, serviceResolver ServiceResolver) *ReverseProxy {
 	return &ReverseProxy{
 		port:            port,
 		pathUrlMap:      make(map[string]string),
@@ -52,7 +53,7 @@ func (p *ReverseProxy) Run(operationCh <-chan *ProxyRuleOperation) error {
 
 	// start server
 	http.HandleFunc("/", p.handleRequestAndRedirect)
-	if err := http.ListenAndServe(":"+p.port, nil); err != nil {
+	if err := http.ListenAndServe(":"+fmt.Sprint(p.port), nil); err != nil {
 		return err
 	}
 
@@ -89,7 +90,7 @@ func (p *ReverseProxy) handleRequestAndRedirect(res http.ResponseWriter, req *ht
 	p.ruleMux.Unlock()
 	service, err := p.serviceResolver.GetService(serviceName)
 	if err == nil {
-		serveReverseProxy(service.Address+":"+service.Port, res, req)
+		serveReverseProxy(service.Address+":"+fmt.Sprint(service.Port), res, req)
 	} else {
 
 	}

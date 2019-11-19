@@ -59,8 +59,8 @@ func NewController(
 			newDepl := new.(*v1alpha1.SimpleIngressRule)
 			oldDepl := old.(*v1alpha1.SimpleIngressRule)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
-				// Periodic resync will send update events for all known Deployments.
-				// Two different versions of the same Deployment will always have different RVs.
+				// Periodic resync will send update events for all known simple ingress rules.
+				// Two different versions of the same simple ingress rules will always have different RVs.
 				return
 			}
 			controller.handleObject(new)
@@ -151,7 +151,6 @@ func (c *Controller) processNextWorkItem() bool {
 					Rules:     rulesMap,
 					Operation: reverseproxy.ADD,
 				}
-
 			} else {
 				c.rulesCh <- &reverseproxy.ProxyRuleOperation{
 					Name:      name,
@@ -168,7 +167,6 @@ func (c *Controller) processNextWorkItem() bool {
 		klog.Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
-
 	if err != nil {
 		utilruntime.HandleError(err)
 		return true
@@ -184,7 +182,7 @@ func (c *Controller) GetService(name string) (*reverseproxy.Service, error) {
 	} else {
 		return &reverseproxy.Service{
 			Address: "http://" + service.Spec.ClusterIP,
-			Port:    fmt.Sprint(service.Spec.Ports[0].Port),
+			Port:    service.Spec.Ports[0].Port,
 		}, nil
 	}
 }

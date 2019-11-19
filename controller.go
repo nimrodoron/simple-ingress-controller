@@ -15,7 +15,6 @@ import (
 	serviceInformer "k8s.io/client-go/informers/core/v1"
 	servicelisters "k8s.io/client-go/listers/core/v1"
 
-	"github.com/nimrodoron/simple-ingress-controller/pkg/apis/simpleingresscontroller/v1alpha1"
 	controllerlientset "github.com/nimrodoron/simple-ingress-controller/pkg/generated/clientset/versioned"
 	informers "github.com/nimrodoron/simple-ingress-controller/pkg/generated/informers/externalversions/simpleingresscontroller/v1alpha1"
 	listers "github.com/nimrodoron/simple-ingress-controller/pkg/generated/listers/simpleingresscontroller/v1alpha1"
@@ -56,13 +55,6 @@ func NewController(
 	simpleIngressRuleInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.handleObject,
 		UpdateFunc: func(old, new interface{}) {
-			newDepl := new.(*v1alpha1.SimpleIngressRule)
-			oldDepl := old.(*v1alpha1.SimpleIngressRule)
-			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
-				// Periodic resync will send update events for all known simple ingress rules.
-				// Two different versions of the same simple ingress rules will always have different RVs.
-				return
-			}
 			controller.handleObject(new)
 		},
 		DeleteFunc: controller.handleObject,
@@ -175,8 +167,12 @@ func (c *Controller) processNextWorkItem() bool {
 	return true
 }
 
-func (c *Controller) GetService(name string) (*reverseproxy.Service, error) {
-	service, err := c.serviceLister.Services("default").Get(name)
+func (c *Controller) GetService(nameWithNamespace string) (*reverseproxy.Service, error) {
+	namespace, name, err := cache.SplitMetaNamespaceKey(nameWithNamespace)
+	if err != nil {
+		namespace = ""
+	}
+	service, err := c.serviceLister.Services(namespace).Get(name)
 	if err != nil {
 		return nil, err
 	} else {

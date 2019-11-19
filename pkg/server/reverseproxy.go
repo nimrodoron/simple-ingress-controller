@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/proxy"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -14,6 +15,8 @@ type ReverseProxy struct {
 	namePathsMap    map[string][]string
 	ruleMux         sync.Mutex
 	serviceResolver ServiceResolver
+	proxyUrl        *url.URL
+	proxy           *httputil.ReverseProxy
 }
 
 type ProxyOperation int
@@ -39,11 +42,14 @@ type ServiceResolver interface {
 }
 
 func NewReverseProxy(port int32, serviceResolver ServiceResolver) *ReverseProxy {
+	url, _ := url.Parse("/")
 	return &ReverseProxy{
 		port:            port,
 		pathUrlMap:      make(map[string]string),
 		namePathsMap:    make(map[string][]string),
 		serviceResolver: serviceResolver,
+		proxyUrl:        url,
+		proxy:           httputil.NewSingleHostReverseProxy(url),
 	}
 }
 
@@ -90,32 +96,19 @@ func (p *ReverseProxy) handleRequestAndRedirect(res http.ResponseWriter, req *ht
 	p.ruleMux.Unlock()
 	service, err := p.serviceResolver.GetService(serviceName)
 	if err == nil {
-		serveReverseProxy(service.Address+":"+fmt.Sprint(service.Port), res, req)
-	} else {
-
+		p.serveReverseProxy(service.Address+":"+fmt.Sprint(service.Port), res, req)
 	}
-
-	/*	url := getProxyUrl(requestPayload.ProxyCondition)
-
-		logRequestPayload(requestPayload, url)
-
-		serveReverseProxy(url, res, req)*/
 }
 
 // Serve a reverse proxy for a given url
-func serveReverseProxy(target string, res http.ResponseWriter, req *http.Request) {
-	// parse the url
-	url, _ := url.Parse(target)
-
-	// create the reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(url)
+func (p *ReverseProxy) serveReverseProxy(target string, res http.ResponseWriter, req *http.Request) {
 
 	// Update the headers to allow for SSL redirection
-	req.URL.Host = url.Host
-	req.URL.Scheme = url.Scheme
+	req.URL.Host = p.proxyUrl.Host
+	req.URL.Scheme = p.proxyUrl.Scheme
 	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
-	req.Host = url.Host
+	req.Host = p.proxyUrl.Host
 
 	// Note that ServeHttp is non blocking and uses a go routine under the hood
-	proxy.ServeHTTP(res, req)
+	p.proxy.ServeHTTP(res, req)
 }

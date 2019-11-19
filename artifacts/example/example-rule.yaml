@@ -6,4 +6,4 @@ spec:
   rules:
     - path: /test/minikube
       service:
-        name: hello-minikube
+        name: default/hello-minikube

@@ -27,4 +27,4 @@ kubectl apply -f cluster-role-binding.yaml
 ubectl expose deployment simple-ingress --type=NodePort --port 8080
 
 ### Test (Should have a service and simple ingress rule):
-curl <node-ip>:8080 <path>
+curl "<node-ip>":8080 "<path>"
